@@ -1,0 +1,119 @@
+<div class="row">
+  <div class="col-md-12 text-center jumbotron">
+
+  </div>
+</div>
+
+<div class="col-md-12 text-center">
+  <video id="my_video" width="640" height="480"/>
+</div>
+
+<div class="row">
+  <div class="col-md-6 text-left">
+    <canvas id="a" style="height:300px; width:600px; background-color: #BBBBBB"/>
+  </div>
+  <div class="col-md-6 text-right">
+    <canvas id="b" style="height:300px; width:600px; background-color: #BBBBBB"/>
+  </div>
+</div>
+<input id="contrast_text" type="text" class="form-control" />
+
+
+<div id="status"></div>
+<script>
+
+  //  function enter() {
+  navigator.myGetMedia = (   navigator.getUserMedia
+  || navigator.webkitGetUserMedia
+  || navigator.mozGetUserMedia
+  || navigator.msGetUserMedia);
+
+  navigator.myGetMedia({video: true}, connect, error);
+
+  function connect(stream) {
+
+    var video = document.getElementById("my_video");
+    video.src = window.URL ? window.URL.createObjectURL(stream) : stream;
+    video.play();
+
+//      var canvas = document.getElementById("c");
+  }
+
+  function error(e) {
+    console.log(e);
+  }
+
+
+  setInterval(capture_image_a, 1500);
+  //  setTimeout(function () {
+  setInterval(capture_image_b, 5);
+  //  }, 5000);
+
+
+  //  setInterval(capture_image_b, 400);
+  //  }
+  function capture_image_a() {
+    var img = document.getElementById('my_video');
+    var canvas = document.getElementById('a');
+    canvas.width = img.width;
+    canvas.height = img.height;
+
+    canvas.getContext('2d').drawImage(img, 0, 0, img.width, img.height);
+    var contrasted_image = contrastImage(img, $('#contrast_text').val())
+    canvas.getContext('2d').drawImage(contrasted_image, 0, 0, contrasted_image.width, contrasted_image.height);
+  }
+
+  //  }
+  function capture_image_b() {
+    var img = document.getElementById('my_video');
+    var canvas = document.getElementById('b');
+    canvas.width = img.width;
+    canvas.height = img.height;
+    canvas.getContext('2d').drawImage(img, 0, 0, img.width, img.height);
+  }
+
+  $('#a').mousemove(function (e) {
+    var pos = findPos(this);
+    var x = e.pageX - pos.x;
+    var y = e.pageY - pos.y;
+    var coord = "x=" + x + ", y=" + y;
+    var c = this.getContext('2d');
+    var p = c.getImageData(x, y, 1, 1).data;
+    var hex = "#" + ("000000" + rgbToHex(p[0], p[1], p[2])).slice(-6);
+    $('#status').html(coord + "<br>" + hex);
+  });
+
+  function findPos(obj) {
+    var curleft = 0, curtop = 0;
+    if (obj.offsetParent) {
+      do {
+        curleft += obj.offsetLeft;
+        curtop += obj.offsetTop;
+      } while (obj = obj.offsetParent);
+      return {x: curleft, y: curtop};
+    }
+    return undefined;
+  }
+
+  function rgbToHex(r, g, b) {
+    if (r > 255 || g > 255 || b > 255)
+      throw "Invalid color component";
+    return ((r << 16) | (g << 8) | b).toString(16);
+  }
+
+  function contrastImage(imageData, contrast) {
+
+    var data = imageData.data;
+    debugger;
+    var factor = (259 * (contrast + 255)) / (255 * (259 - contrast));
+
+    for(var i=0;i<data.length;i+=4)
+    {
+      data[i] = factor * (data[i] - 128) + 128;
+      data[i+1] = factor * (data[i+1] - 128) + 128;
+      data[i+2] = factor * (data[i+2] - 128) + 128;
+    }
+    return imageData;
+  }
+
+</script>
